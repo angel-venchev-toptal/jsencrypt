@@ -10,10 +10,17 @@ if (rng_pool == null) {
   rng_pool = [];
   rng_pptr = 0;
   let t;
-  if (window.crypto && window.crypto.getRandomValues) {
+  let globalInstance: Window = null;
+  if(typeof window !== 'undefined') {
+    globalInstance = window;
+  } else {
+    // Web worker context
+    globalInstance = self;
+  }
+  if (globalInstance && globalInstance.crypto && globalInstance.crypto.getRandomValues) {
     // Extract entropy (2048 bits) from RNG if available
     const z = new Uint32Array(256);
-    window.crypto.getRandomValues(z);
+    globalInstance.crypto.getRandomValues(z);
     for (t = 0; t < z.length; ++t) {
         rng_pool[rng_pptr++] = z[t] & 255;
     }
@@ -25,10 +32,10 @@ if (rng_pool == null) {
   const onMouseMoveListener = function (ev:Event & {x:number; y:number; }) {
     count = count || 0;
     if (count >= 256 || rng_pptr >= rng_psize) {
-      if (window.removeEventListener) {
-          window.removeEventListener("mousemove", onMouseMoveListener, false);
-      } else if ((window as any).detachEvent) {
-          (window as any).detachEvent("onmousemove", onMouseMoveListener);
+      if (globalInstance.removeEventListener) {
+          globalInstance.removeEventListener("mousemove", onMouseMoveListener, false);
+      } else if ((globalInstance as any).detachEvent) {
+          (globalInstance as any).detachEvent("onmousemove", onMouseMoveListener);
       }
       return;
     }
@@ -40,10 +47,10 @@ if (rng_pool == null) {
       // Sometimes Firefox will deny permission to access event properties for some reason. Ignore.
     }
   };
-  if (window.addEventListener) {
-      window.addEventListener("mousemove", onMouseMoveListener, false);
-  } else if ((window as any).attachEvent) {
-      (window as any).attachEvent("onmousemove", onMouseMoveListener);
+  if (globalInstance.addEventListener) {
+      globalInstance.addEventListener("mousemove", onMouseMoveListener, false);
+  } else if ((globalInstance as any).attachEvent) {
+      (globalInstance as any).attachEvent("onmousemove", onMouseMoveListener);
   }
 
 }
